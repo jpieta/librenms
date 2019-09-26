@@ -61,14 +61,16 @@ if ($config['title_image']) {
                 <?php
                     require_once '../includes/device-groups.inc.php';
                     $devices_groups = GetDeviceGroups();
-                if (count($devices_groups) > 0) {
+if (Auth::user()->hasGlobalAdmin()) {    
+	    if (count($devices_groups) > 0) {
                     echo '<li class="dropdown-submenu"><a href="#"><i class="fa fa-th fa-fw fa-lg" aria-hidden="true"></i> Device Groups Maps</a><ul class="dropdown-menu scrollable-menu">';
                     foreach ($devices_groups as $group) {
                         echo '<li><a href="'.generate_url(array('page'=>'map','group'=>$group['id'])).'" title="'.$group['desc'].'"><i class="fa fa-th fa-fw fa-lg" aria-hidden="true"></i> '.ucfirst($group['name']).'</a></li>';
                     }
                     unset($group);
                     echo '</ul></li>';
-                }
+	    }
+}	    
                 ?>
               <li><a href="<?php echo(generate_url(array('page'=>'fullscreenmap'))); ?>"><i class="fa fa-expand fa-fw fa-lg" aria-hidden="true"></i> Geographical</a></li>
             </ul>
@@ -170,7 +172,7 @@ foreach ($device_types as $devtype) {
 } else {
     echo '<li class="dropdown-submenu"><a href="#">No devices</a></li>';
 }
-
+if (Auth::user()->hasGlobalAdmin()) {
 if (count($devices_groups) > 0) {
     echo '<li class="dropdown-submenu"><a href="#"><i class="fa fa-th fa-fw fa-lg" aria-hidden="true"></i> Device Groups</a><ul class="dropdown-menu scrollable-menu">';
     foreach ($devices_groups as $group) {
@@ -179,29 +181,28 @@ if (count($devices_groups) > 0) {
     unset($group);
     echo '</ul></li>';
 }
-if ($config['show_locations']) {
-    if ($config['show_locations_dropdown']) {
-        $locations = getlocations();
-        if (count($locations) > 0) {
-            echo('
+}
+if (Auth::user()->hasGlobalAdmin()) {
+    if ($config['show_locations']) {
+        if ($config['show_locations_dropdown']) {
+            $locations = getlocations();
+            if (count($locations) > 0) {
+                echo('
                     <li role="presentation" class="divider"></li>
                     <li class="dropdown-submenu">
                     <a href="#"><i class="fa fa-map-marker fa-fw fa-lg" aria-hidden="true"></i> Geo Locations</a>
                     <ul class="dropdown-menu scrollable-menu">
-                    <li><a href="locations"><i class="fa fa-map-marker fa-fw fa-lg" aria-hidden="true"></i> All Locations</a></li>
                 ');
-            foreach ($locations as $location) {
-                echo('            <li><a href="devices/location=' . $location['id'] . '/"><i class="fa fa-building fa-fw fa-lg" aria-hidden="true"></i> ' . htmlentities($location['location']) . ' </a></li>');
-            }
-            echo('
+                foreach ($locations as $location) {
+                    echo('            <li><a href="devices/location=' . urlencode($location) . '/"><i class="fa fa-building fa-fw fa-lg" aria-hidden="true"></i> ' . $location . ' </a></li>');
+                }
+                echo('
                     </ul>
                     </li>
                 ');
+            }
         }
     }
-}
-
-if (Auth::user()->hasGlobalAdmin()) {
     echo '
             <li role="presentation" class="divider"></li>';
     if (is_module_enabled('poller', 'mib')) {
@@ -385,8 +386,32 @@ if ($menu_sensors) {
     echo('            <li role="presentation" class="divider"></li>');
 }
 
-$icons = \App\Models\Sensor::getIconMap();
+$icons = array(
+    'fanspeed' => 'tachometer',
+    'humidity' => 'tint',
+    'temperature' => 'thermometer-full',
+    'current' => 'bolt',
+    'frequency' => 'line-chart',
+    'power' => 'power-off',
+    'voltage' => 'bolt',
+    'charge' => 'battery-half',
+    'dbm' => 'sun-o',
+    'load' => 'percent',
+    'runtime' => 'hourglass-half',
+    'state' => 'bullseye',
+    'signal' => 'wifi',
+    'snr' => 'signal',
+    'pressure' => 'thermometer-empty',
+    'cooling' => 'thermometer-full',
+    'airflow' => 'angle-double-right',
+    'delay' => 'clock-o',
+    'chromatic_dispersion' => 'indent',
+    'ber' => 'sort-amount-desc',
+    'quality_factor' => 'arrows',
+    'eer' => 'snowflake-o',
+    'waterflow' => 'tint',
 
+);
 foreach (array('fanspeed','humidity','temperature','signal') as $item) {
     if (isset($menu_sensors[$item])) {
         echo('            <li><a href="health/metric='.$item.'/"><i class="fa fa-'.$icons[$item].' fa-fw fa-lg" aria-hidden="true"></i> '.nicecase($item).'</a></li>');
@@ -400,7 +425,7 @@ if ($sep && array_keys($menu_sensors)) {
     $sep = 0;
 }
 
-foreach (array('current','frequency','power','voltage','power_consumed','power_factor') as $item) {
+foreach (array('current','frequency','power','voltage') as $item) {
     if (isset($menu_sensors[$item])) {
         echo('            <li><a href="health/metric='.$item.'/"><i class="fa fa-'.$icons[$item].' fa-fw fa-lg" aria-hidden="true"></i> '.nicecase($item).'</a></li>');
         unset($menu_sensors[$item]);
@@ -790,6 +815,9 @@ if ($(window).width() < 768) {
 devices.initialize();
 ports.initialize();
 bgp.initialize();
+$('#gsearch').bind('typeahead:select', function(ev, suggestion) {
+    window.location.href = suggestion.url;
+});
 $('#gsearch').typeahead({
     hint: true,
     highlight: true,
@@ -830,13 +858,9 @@ $('#gsearch').typeahead({
         header: '<h5><strong>&nbsp;BGP Sessions</strong></h5>',
         suggestion: Handlebars.compile('<p><a href="{{url}}"><small>{{{bgp_image}}} {{name}} - {{hostname}}<br />AS{{localas}} -> AS{{remoteas}}</small></a></p>')
     }
-}).on('typeahead:select', function(ev, suggestion) {
-    window.location.href = suggestion.url;
-}).on('keyup', function(e) {
-    // on enter go to the first selection
-    if(e.which === 13) {
-        $('.tt-selectable').first().click();
-    }
+});
+$('#gsearch').bind('typeahead:open', function(ev, suggestion) {
+    $('#gsearch').addClass('search-box');
 });
 </script>
 

@@ -30,6 +30,7 @@ use LibreNMS\Authentication\LegacyAuth;
 use LibreNMS\Alert\AlertUtil;
 use LibreNMS\Config;
 use PHPMailer\PHPMailer\PHPMailer;
+use LibreNMS\Util\Time;
 
 /**
  * @param $rule
@@ -157,7 +158,8 @@ function GetRules($device_id)
  */
 function IsMaintenance($device_id)
 {
-    return \App\Models\Device::find($device_id)->isUnderMaintenance();
+    $device = \App\Models\Device::find($device_id);
+    return !is_null($device) && $device->isUnderMaintenance();
 }
 /**
  * Run all rules for a device
@@ -411,8 +413,8 @@ function DescribeAlert($alert)
     $obj['version']       = $device['version'];
     $obj['location']      = $device['location'];
     $obj['uptime']        = $device['uptime'];
-    $obj['uptime_short']  = formatUptime($device['uptime'], 'short');
-    $obj['uptime_long']   = formatUptime($device['uptime']);
+    $obj['uptime_short']  = Time::formatInterval($device['uptime'], 'short');
+    $obj['uptime_long']   = Time::formatInterval($device['uptime']);
     $obj['description']   = $device['purpose'];
     $obj['notes']         = $device['notes'];
     $obj['alert_notes']   = $alert['note'];
@@ -672,7 +674,7 @@ function loadAlerts($where)
     $alerts = [];
     foreach (dbFetchRows("SELECT alerts.id, alerts.device_id, alerts.rule_id, alerts.state, alerts.note, alerts.info FROM alerts WHERE $where") as $alert_status) {
         $alert = dbFetchRow(
-            'SELECT alert_log.id,alert_log.rule_id,alert_log.device_id,alert_log.state,alert_log.details,alert_log.time_logged,alert_rules.rule,alert_rules.severity,alert_rules.extra,alert_rules.name,alert_rules.builder FROM alert_log,alert_rules WHERE alert_log.rule_id = alert_rules.id && alert_log.device_id = ? && alert_log.rule_id = ? && alert_rules.disabled = 0 ORDER BY alert_log.id DESC LIMIT 1',
+            'SELECT alert_log.id,alert_log.rule_id,alert_log.device_id,alert_log.state,alert_log.details,alert_log.time_logged,alert_rules.rule,alert_rules.severity,alert_rules.extra,alert_rules.name,alert_rules.query,alert_rules.builder FROM alert_log,alert_rules WHERE alert_log.rule_id = alert_rules.id && alert_log.device_id = ? && alert_log.rule_id = ? && alert_rules.disabled = 0 ORDER BY alert_log.id DESC LIMIT 1',
             array($alert_status['device_id'], $alert_status['rule_id'])
         );
 

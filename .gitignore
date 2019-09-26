@@ -10,6 +10,16 @@
 !/.codeclimate.yml
 !/.mention-bot
 !/.env.example
+**/opt/librenms/rrd
+**/opt/librenms/cache
+**/opt/librenms/logs
+**/rrd
+**/cache
+**/logs
+/rrd
+/cache
+/logs
+
 
 # Others #
 ##########
@@ -33,6 +43,7 @@ npm-debug.log
 yarn-error.log
 composer.phar
 _ide_helper.php
+_ide_helper_models.php
 
 # Docs #
 ########

@@ -25,7 +25,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mysql'),
+    'default' => env('DB_CONNECTION', env('DBTEST') ? 'testing' : 'mysql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -54,8 +54,9 @@ return [
 
         'mysql' => [
             'driver' => 'mysql',
-            'host' => env('DB_HOST', $fallback_db_config['db_host']),
-            'port' => env('DB_PORT', $fallback_db_config['db_port']),
+          //  'host' => env('DB_HOST', $fallback_db_config['db_host']),
+	   'host'     => env('DB_HOST', '10.181.160.40'),
+	    'port' => env('DB_PORT', $fallback_db_config['db_port']),
             'database' => env('DB_DATABASE', $fallback_db_config['db_name']),
             'username' => env('DB_USERNAME', $fallback_db_config['db_user']),
             'password' => env('DB_PASSWORD', $fallback_db_config['db_pass']),
@@ -64,6 +65,21 @@ return [
             'collation' => 'utf8_unicode_ci',
             'prefix' => '',
             'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ],
+
+        'testing' => [
+            'driver' => env('DB_TEST_DRIVER', 'mysql'),
+            'host' => env('DB_TEST_HOST', 'localhost'),
+            'port' => env('DB_TEST_PORT', ''),
+            'database' => env('DB_TEST_DATABASE', 'librenms_phpunit_78hunjuybybh'),
+            'username' => env('DB_TEST_USERNAME', 'root'),
+            'password' => env('DB_TEST_PASSWORD', ''),
+            'unix_socket' => env('DB_TEST_SOCKET', ''),
+            'charset' => 'utf8',
+            'collation' => 'utf8_unicode_ci',
+            'prefix' => '',
             'strict' => true,
             'engine' => null,
         ],

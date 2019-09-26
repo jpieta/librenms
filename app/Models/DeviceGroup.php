@@ -25,9 +25,8 @@
 
 namespace App\Models;
 
-use App\Util;
+use Permissions;
 use DB;
-use Settings;
 
 class DeviceGroup extends BaseModel
 {
@@ -116,7 +115,7 @@ class DeviceGroup extends BaseModel
             return $pattern;
         }
 
-        foreach (Settings::get('alert.macros.group', []) as $macro => $value) {
+        foreach (\LibreNMS\Config::get('alert.macros.group', []) as $macro => $value) {
             $value = str_replace(['%', '&&', '||'], ['', 'AND', 'OR'], $value);  // this might need something more complex
             if (!str_contains($macro, ' ')) {
                 $pattern = str_replace('macros.'.$macro, '('.$value.')', $pattern);
@@ -258,14 +257,14 @@ class DeviceGroup extends BaseModel
      *
      * @param array|string $params
      */
-    public function setParamsAttribute($params)
-    {
-        if (!Util::isJson($params)) {
-            $params = json_encode($params);
-        }
-
-        $this->attributes['params'] = $params;
-    }
+//    public function setParamsAttribute($params)
+//    {
+//        if (!Util::isJson($params)) {
+//            $params = json_encode($params);
+//        }
+//
+//        $this->attributes['params'] = $params;
+//    }
 
     /**
      * Check if the stored pattern is v1
@@ -293,11 +292,7 @@ class DeviceGroup extends BaseModel
             return $query;
         }
 
-        if (!$this->isJoined($query, 'device_group_device')) {
-            $query->join('device_group_device', 'device_group_device.device_group_id', 'device_groups.id');
-        }
-
-        return $this->hasDeviceAccess($query, $user, 'device_group_device');
+        return $query->whereIn('id', Permissions::deviceGroupsForUser($user));
     }
 
     // ---- Define Relationships ----
