@@ -54,8 +54,8 @@ return [
 
         'mysql' => [
             'driver' => 'mysql',
-          //  'host' => env('DB_HOST', $fallback_db_config['db_host']),
-	   'host'     => env('DB_HOST', '10.181.160.40'),
+            'host' => env('DB_HOST', $fallback_db_config['db_host']),
+	  // 'host'     => env('DB_HOST', '10.181.160.40'),
 	    'port' => env('DB_PORT', $fallback_db_config['db_port']),
             'database' => env('DB_DATABASE', $fallback_db_config['db_name']),
             'username' => env('DB_USERNAME', $fallback_db_config['db_user']),
