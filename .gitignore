@@ -28,10 +28,16 @@ __pycache__
 *.swp
 Thumbs.db
 config.php
+html/css/custom/*
+html/images/custom/*
+html/plugins/*
+!html/plugins/Test/
+includes/custom/*
 junk
 nbproject
 patches
 !/lib/yaml
+/vendor
 /node_modules
 npm-debug.log
 yarn-error.log
